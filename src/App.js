@@ -1,23 +1,68 @@
-import logo from './logo.svg';
-import './App.css';
+// imports
+import { useEffect, useState } from "react";
+import Wordle from "./components/Wordle";
+import { createClient } from '@supabase/supabase-js';
+import Hint from "./components/Hint";
+import navi from './images/navi.png';
+
 
 function App() {
+
+  // local state
+  const [solution, setSolution] = useState(null);
+  const [hint, setHint] = useState(null);
+  const [showHint, setShowHint] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+
+  // connect to supabase
+  const supabaseUrl = 'https://oabycyraqhhbotyttktg.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hYnljeXJhcWhoYm90eXR0a3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NjY2ODgzMDEsImV4cCI6MTk4MjI2NDMwMX0.3eacF8tkYUtvnf30m_wcgRSQuSnlWUjOmNiIEdMnm_E';
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+
+  // supbase fetch
+  useEffect(() => {
+
+    const fetchSolution = async () => {
+      // generate random ID
+      const randomID = Math.floor(Math.random() * 34 + 1);
+
+      // fetch from supabase
+      const { data, error } = await supabase
+        .from('solutions')
+        .select()
+        .eq('id', randomID)
+        .single()
+
+        // set error if there is one
+        if(error){
+          setFetchError('Could not fetch a solution from Supabase');
+          setSolution(null);
+          setHint(null);
+          console.log(error);
+        }
+        
+        if(data){
+          setSolution(data.word);
+          setHint(data.hint);
+        }
+
+    }
+
+    fetchSolution();
+
+  }, [])
+
+  const toggleHint = () => {
+      setShowHint(!showHint);
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1 id="title">Zeldle</h1>
+      <img id="navi" src={navi} onClick={toggleHint}/>
+      {solution && <Wordle solution={solution}/>}
+      {showHint && <Hint onClick={() => setShowHint(false)} hint={hint}/>}
     </div>
   );
 }
